@@ -1,32 +1,45 @@
-# Labs Hub on Vercel: database and AI
+# Emapta AI Labs · Delivery
 
-## What is here
-- index.html   the Hub (single file)
-- raise.html   the public intake form at /raise
-- config.js    Supabase settings (edit this one file)
-- api/ai.js    Vercel function that calls Gemini with a server-side key
-- supabase.sql tables and policies, run once in Supabase
-- vercel.json  clean URLs
+The engagement platform: intake → kickoff → pre-discovery → discovery → findings → options → build → results, with stakeholders, sessions, data requests, email drafts, weekly updates and leadership views.
 
-## Step 1: deploy (10 minutes)
-1. Put these files in a GitHub repository (labs-hub). Vercel → Add New → Project → import it. Framework: Other. Deploy.
-2. Open the URL. The Hub runs in local mode until config.js is filled in.
+## Files
+| File | What it is | Edit it to… |
+|---|---|---|
+| `index.html` | the page shell | rarely |
+| `app.js` | all the application logic and the seed data | change screens, phases, task templates, email wording, seed engagements |
+| `assets/styles.css` | the design | change colours, spacing, layout |
+| `assets/logo.png` | the logo | |
+| `config.js` | Supabase settings | connect the shared database |
+| `sync.js` | sign-in and shared data (only runs when config.js is filled) | rarely |
+| `api/ai.js` | Gemini call (server-side key) | switch AI provider |
+| `api/remind.js` | weekday reminders by email and Teams | change what the reminder contains |
+| `supabase.sql` | database tables and policies | run once in Supabase |
+| `vercel.json` | clean URLs, cron schedule | change the reminder time |
+| `REMINDERS.md` | how to set up the Power Automate flow | |
 
-## Step 2: database with Supabase (20 minutes)
-1. supabase.com → New project. Region: Sydney (AU). Save the database password.
-2. SQL editor → paste supabase.sql → Run.
-3. Authentication → Providers → Azure: enable, paste the Entra app's Client ID and Secret, and register the redirect URL Supabase shows in Entra.
-   (Email magic links also work out of the box if you want to start without Entra.)
-4. Project Settings → API: copy the Project URL and the anon public key into config.js. Commit. Vercel redeploys.
-5. Open the Hub: you are asked to sign in. The first signed-in user's data becomes the shared copy; everyone then sees the same Hub and changes appear live.
-6. /raise now writes to the requests table; new requests are pulled into the Hub the next time a signed-in user opens it, and leads are notified.
+## Where things live in app.js
+- `PHASES` — the eight phases, each with its gate question, task template (`[title, owner, days from kickoff, priority]`) and the emails it uses
+- `STAKE_ROLES` — the stakeholder map roles
+- `seed()` — the engagements that load on a fresh install (replace with your own, or leave empty once the database is live)
+- `draft(kind, e, p)` — the email templates, in the house style
+- `home()`, `engsList()`, `engPage()` and the `t*` tab functions — the screens
+- `updatesPage()` — the weekly update view and deck download
+- `leadership()`, `downloadReport()` — the leadership view and report
 
-## Step 3: AI with Gemini (10 minutes)
-1. aistudio.google.com → Get API key (free tier). If a key has ever been pasted in a chat or email, create a new one and delete the old one.
-2. Vercel → Project → Settings → Environment Variables → GEMINI_API_KEY = the key (all environments). Optional: GEMINI_MODEL = gemini-flash-latest. Redeploy.
-3. The assistant now answers in natural language about the projects and tasks, and turns pasted notes into suggested tasks. Without the key it falls back to the built-in rules.
+## Run locally
+Open `index.html` in a browser. No build step.
 
-## Notes
-- Hobby plan is for non-commercial use; move to Pro when the team uses it for real.
-- Client transcripts sent to the assistant go to Google. For a client that needs AU-only processing, point api/ai.js at Azure OpenAI (Australia East) or Anthropic instead; the Hub does not change.
-- To reset the shared data, delete the row in the hub table.
+## Deploy
+Push to GitHub → Vercel → Import → Framework "Other" → Deploy. Then follow `REMINDERS.md` and the Supabase steps below.
+
+## Shared database (Supabase)
+1. supabase.com → New project (Sydney) → SQL editor → run `supabase.sql`.
+2. Project Settings → API → copy Project URL and anon key into `config.js`. Commit.
+3. Authentication → Providers: Email magic links work immediately; add Azure when the Entra app is ready.
+4. Sign in once; the seed becomes the shared copy. Team emails are set on the Team page.
+
+## AI
+Vercel → Settings → Environment Variables → `GEMINI_API_KEY` (and optionally `GEMINI_MODEL`). Redeploy.
+
+## Bumping the seed
+`KEY` in `app.js` names the local-storage slot. Change it (for example `labs-delivery-v4`) to force every browser to reload the seed. Not needed once the shared database is live.
